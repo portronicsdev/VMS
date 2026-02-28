@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  /* Safe area for notched phones / tablets when installed as PWA */
+  html, body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   :root {
     /* Background */
     --background: 0 0% 100%;
