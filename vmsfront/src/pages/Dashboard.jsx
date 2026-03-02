@@ -109,8 +109,27 @@ export default function Dashboard({ setScreen }) {
 
   const formatTime = (value) => {
     if (!value) return "--";
-    const date = new Date(value);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    return new Date(value).toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return "--";
+
+    return new Date(value).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
   };
 
   return (
@@ -215,8 +234,8 @@ export default function Dashboard({ setScreen }) {
                   <td className="p-2">{row.phone}</td>
                   <td className="p-2">{row.purpose}</td>
                   <td className="p-2">{row.personToMeet}</td>
-                  <td className="p-2">{formatTime(row.checkInTime)}</td>
-                  <td className="p-2">{formatTime(row.checkOutTime)}</td>
+                  <td className="p-2">{formatDateTime(row.checkInTime)}</td>
+                  <td className="p-2">{formatDateTime(row.checkOutTime)}</td>
                   <td className="p-2">{row.status}</td>
                   <td className="p-2">
                     {row.status === "active" ? (

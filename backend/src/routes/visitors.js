@@ -1,5 +1,5 @@
 const express = require("express");
-const Visitor = require("../models/Visitor");
+const { supabase, toVisitorRow } = require("../lib/supabase");
 
 const router = express.Router();
 
@@ -9,12 +9,20 @@ router.get("/:phone", async (req, res, next) => {
       return res.status(400).json({ message: "phone must be 10 digits" });
     }
 
-    const visitor = await Visitor.findOne({ phone: req.params.phone }).lean();
-    if (!visitor) {
+    const { data, error } = await supabase
+      .from("visitors")
+      .select("*")
+      .eq("phone", req.params.phone)
+      .single();
+
+    if (error && error.code !== "PGRST116") return next(error);
+    if (!data) {
       return res.status(404).json({ message: "Visitor not found" });
     }
-    return res.json(visitor);
+    return res.json(toVisitorRow(data));
   } catch (error) {
+              console.log("❌ Error in GET /api/visitors/:phone:", error);
+
     return next(error);
   }
 });
@@ -30,14 +38,16 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "phone must be 10 digits" });
     }
 
-    const visitor = await Visitor.findOneAndUpdate(
-      { phone },
-      { name, company },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    const { data, error } = await supabase
+      .from("visitors")
+      .upsert({ phone, name, company: company || null }, { onConflict: "phone" })
+      .select()
+      .single();
 
-    return res.status(201).json(visitor);
+    if (error) return next(error);
+    return res.status(201).json(toVisitorRow(data));
   } catch (error) {
+    console.log("❌ Error in POST /api/visitors:", error);
     return next(error);
   }
 });
