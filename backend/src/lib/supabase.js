@@ -3,8 +3,7 @@ require("dotenv").config();
 
 console.log("🔍 SUPABASE_URL:", process.env.SUPABASE_URL ? "✅ Loaded" : "❌ Missing");
 console.log("🔍 SUPABASE_KEY:", process.env.SUPABASE_KEY ? "✅ Loaded" : "❌ Missing");
-console.log(process.env.SUPABASE_URL);
-console.log(process.env.SUPABASE_KEY);
+
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -34,7 +33,7 @@ function toVisitRow(row) {
     name: row.name,
     purpose: row.purpose,
     personToMeet: row.person_to_meet,
-    //photoUrl: row.photo_url,
+    photoUrl: row.photo_url,
     checkInTime: row.check_in_time,
     checkOutTime: row.check_out_time,
     status: row.status,

@@ -1,28 +1,41 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+/* =========================================
+   GENERIC REQUEST HELPER
+========================================= */
+
 async function request(path, options = {}) {
+
+  const isFormData = options.body instanceof FormData;
+
   const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(options.headers || {})
-    },
-    ...options
+    }
   });
 
   if (!res.ok) {
     let message = "Request failed";
+
     try {
       const data = await res.json();
       message = data?.message || message;
-    } catch {
-      // ignore parse errors
-    }
+    } catch {}
+
     throw new Error(message);
   }
 
   if (res.status === 204) return null;
+
   return res.json();
 }
+
+
+/* =========================================
+   VISITOR API
+========================================= */
 
 export function getVisitorByPhone(phone) {
   return request(`/api/visitors/${encodeURIComponent(phone)}`);
@@ -35,16 +48,23 @@ export function createOrUpdateVisitor(payload) {
   });
 }
 
-export function createVisit(payload) {
+
+/* =========================================
+   VISIT API
+========================================= */
+
+export function createVisit(formData) {
   return request("/api/visits", {
     method: "POST",
-    body: JSON.stringify(payload)
+    body: formData
   });
 }
 
 export function getVisits(params = {}) {
+
   const search = new URLSearchParams(params);
   const query = search.toString();
+
   return request(`/api/visits${query ? `?${query}` : ""}`);
 }
 

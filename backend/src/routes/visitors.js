@@ -29,6 +29,7 @@ router.get("/:phone", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
+    console.log("BODY:", req.body);
     const { phone, name, company } = req.body;
     if (!phone || !name) {
       return res.status(400).json({ message: "phone and name are required" });
