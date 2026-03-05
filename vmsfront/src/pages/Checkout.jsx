@@ -5,135 +5,196 @@ import { Input } from "@/components/ui/input";
 import { checkoutVisit, getVisits } from "@/lib/api";
 
 export default function CheckOut({ setScreen }) {
+
   const [phone, setPhone] = useState("");
   const [visitors, setVisitors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 🔄 Fetch active visitors
   useEffect(() => {
+
     const timer = setTimeout(async () => {
+
       setLoading(true);
       setMessage("");
 
       try {
-        const data = await getVisits({
-          status: "active",
-          ...(phone ? { phone } : {})
-        });
 
-        setVisitors(data);
+        const data = await getVisits();
+        let list = Array.isArray(data) ? data : data?.data || [];
+
+        list = list.filter(v => v.status === "active");
+
+        if (phone) {
+          list = list.filter(v => v.phone.includes(phone));
+        }
+
+        setVisitors(list);
+
       } catch (error) {
+
         setMessage(error.message || "Unable to load visitors.");
+
       } finally {
+
         setLoading(false);
+
       }
+
     }, 300);
 
     return () => clearTimeout(timer);
+
   }, [phone]);
 
-  // ✅ Checkout handler
   const handleCheckout = async (id) => {
+
     try {
+
       await checkoutVisit(id);
 
-      const refreshed = await getVisits({
-        status: "active",
-        ...(phone ? { phone } : {})
-      });
+      const refreshed = await getVisits();
+      let list = Array.isArray(refreshed) ? refreshed : refreshed?.data || [];
 
-      setVisitors(refreshed);
+      list = list.filter(v => v.status === "active");
+
+      if (phone) {
+        list = list.filter(v => v.phone.includes(phone));
+      }
+
+      setVisitors(list);
+
     } catch (error) {
+
       setMessage(error.message || "Unable to checkout visitor.");
+
     }
+
   };
 
-  // 🕒 IST Date + Time formatter (FIXED)
   const formatDateTime = (value) => {
+
     if (!value) return "--";
 
     return new Date(value).toLocaleString("en-IN", {
       timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
-      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true
     });
-  };
 
-  // 🧪 Debug helper (optional - remove later)
-  const debugTime = (value) => {
-    console.log("RAW UTC:", value);
-    console.log("IST:", formatDateTime(value));
   };
 
   return (
-    <Card className="rounded-2xl shadow-lg">
-      <CardContent className="p-6 space-y-4">
-        <Button variant="outline" onClick={() => setScreen("home")}>
-          Back
-        </Button>
 
-        <h2 className="text-2xl font-semibold">Check Out</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-6">
 
-        <Input
-          placeholder="Enter Phone Number"
-          value={phone}
-          maxLength={10}
-          inputMode="numeric"
-          onChange={(e) =>
-            setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
-          }
-          className="text-lg p-4"
-        />
+      <Card className="w-full max-w-4xl rounded-3xl shadow-2xl">
 
-        {loading && (
-          <p className="text-sm text-gray-500">
-            Loading active visitors...
-          </p>
-        )}
+        <CardContent className="p-10 space-y-6">
 
-        {message && (
-          <p className="text-sm text-gray-600">{message}</p>
-        )}
+          <div className="flex justify-between items-center">
 
-        <h3 className="text-lg font-semibold">Active Visitors</h3>
+            <h2 className="text-3xl font-bold">
+              Visitor Check-Out
+            </h2>
 
-        <div className="space-y-2">
-          {visitors.map((v) => {
-             debugTime(v.checkInTime); // uncomment if needed
+            <Button variant="outline" onClick={() => setScreen("home")}>
+              Back
+            </Button>
 
-            return (
-              <div
-                key={v._id}
-                className="flex justify-between items-center border p-3 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">{v.name}</p>
+          </div>
 
-                  {/* ✅ Date + Time in IST */}
-                  <p className="text-sm text-gray-500">
-                    {formatDateTime(v.checkInTime)}
-                  </p>
-                </div>
+          <Input
+            placeholder="Search by Phone"
+            value={phone}
+            maxLength={10}
+            inputMode="numeric"
+            onChange={(e) =>
+              setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+            }
+            className="text-xl p-5 max-w-md"
+          />
 
-                <Button onClick={() => handleCheckout(v._id)}>
-                  Check Out
-                </Button>
-              </div>
-            );
-          })}
-
-          {!loading && visitors.length === 0 && (
+          {loading && (
             <p className="text-sm text-gray-500">
-              No active visitors.
+              Loading active visitors...
             </p>
           )}
-        </div>
-      </CardContent>
-    </Card>
+
+          {message && (
+            <p className="text-sm text-gray-600">
+              {message}
+            </p>
+          )}
+
+          <div className="space-y-3">
+
+            {visitors.map((v) => (
+
+              <div
+                key={v._id}
+                className="flex items-center justify-between bg-white border rounded-xl p-4 shadow-sm"
+              >
+
+                <div className="flex items-center gap-4">
+
+                  {v.photoUrl ? (
+
+                    <img
+                      src={v.photoUrl}
+                      className="h-14 w-14 rounded-lg object-cover"
+                    />
+
+                  ) : (
+
+                    <div className="h-14 w-14 rounded-lg bg-gray-200" />
+
+                  )}
+
+                  <div>
+
+                    <p className="font-semibold text-lg">
+                      {v.name}
+                    </p>
+
+                    <p className="text-sm text-gray-500 whitespace-nowrap">
+                      {formatDateTime(v.checkInTime)}
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <Button
+                  className="h-12 text-lg"
+                  onClick={() => handleCheckout(v._id)}
+                >
+                  Check Out
+                </Button>
+
+              </div>
+
+            ))}
+
+            {!loading && visitors.length === 0 && (
+
+              <p className="text-sm text-gray-500">
+                No active visitors.
+              </p>
+
+            )}
+
+          </div>
+
+        </CardContent>
+
+      </Card>
+
+    </div>
+
   );
+
 }
