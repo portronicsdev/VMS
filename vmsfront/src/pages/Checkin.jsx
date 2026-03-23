@@ -207,11 +207,11 @@ export default function CheckIn({ setScreen }) {
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-[1.2fr_1fr] gap-4 md:gap-10 items-start">
 
             {/* LEFT SIDE FORM */}
 
-            <div className="space-y-5">
+            <div className="space-y-4 md:space-y-5 min-w-0">
 
               <Input
                 ref={phoneRef}
@@ -291,7 +291,7 @@ export default function CheckIn({ setScreen }) {
 
             {/* RIGHT SIDE CAMERA */}
 
-            <div className="flex flex-col items-center justify-center gap-6 bg-gray-50 p-6 rounded-xl">
+            <div className="flex flex-col items-center justify-center gap-4 md:gap-6 bg-gray-50 p-4 md:p-6 rounded-xl min-w-0">
 
               <video
                 ref={videoRef}
