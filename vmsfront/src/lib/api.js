@@ -75,6 +75,20 @@ export function logout() {
   return request("/api/auth/logout", { method: "POST" });
 }
 
+export function forgotPassword(email) {
+  return request("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+}
+
+export function resetPassword(token, newPassword) {
+  return request("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword })
+  });
+}
+
 export function registerUser(payload, apiKey) {
   return request("/api/auth/register", {
     method: "POST",
@@ -90,6 +104,11 @@ export function registerUser(payload, apiKey) {
 
 export function getVisitorByPhone(phone) {
   return request(`/api/visitors/${encodeURIComponent(phone)}`);
+}
+
+export function searchVisitorsByPhone(phone) {
+  const q = new URLSearchParams({ phone }).toString();
+  return request(`/api/visitors/search?${q}`);
 }
 
 export function createOrUpdateVisitor(payload) {

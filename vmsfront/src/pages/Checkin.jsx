@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import {
   createOrUpdateVisitor,
   createVisit,
-  getVisitorByPhone
+  getVisitorByPhone,
+  searchVisitorsByPhone
 } from "@/lib/api";
 
 export default function CheckIn({ setScreen }) {
@@ -20,6 +21,7 @@ export default function CheckIn({ setScreen }) {
   const [loadingVisitor, setLoadingVisitor] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [matches, setMatches] = useState([]);
 
   const [photoFile, setPhotoFile] = useState(null);
 
@@ -105,6 +107,24 @@ export default function CheckIn({ setScreen }) {
 
     return () => clearTimeout(timer);
 
+  }, [phone]);
+
+  useEffect(() => {
+    if (phone.length < 3 || phone.length === 10) {
+      setMatches([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const data = await searchVisitorsByPhone(phone);
+        setMatches(Array.isArray(data) ? data : []);
+      } catch {
+        setMatches([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
   }, [phone]);
 
   const capturePhoto = async () => {
@@ -193,13 +213,13 @@ export default function CheckIn({ setScreen }) {
 
   return (
 
-    <div className="bg-gradient-to-br from-slate-100 to-slate-200 py-2">
+    <div className="bg-gradient-to-br from-slate-100 to-slate-200 py-1">
 
       <Card className="w-full max-w-6xl mx-auto rounded-3xl shadow-2xl">
 
-        <CardContent className="p-10">
+        <CardContent className="p-6 md:p-8">
 
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-4 md:mb-6">
             <h2 className="text-3xl font-bold">Visitor Check-In</h2>
 
             <Button variant="outline" onClick={() => setScreen("home")}>
@@ -224,6 +244,26 @@ export default function CheckIn({ setScreen }) {
                 }
                 className="text-xl p-5"
               />
+              {matches.length > 0 && (
+                <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+                  {matches.map((m) => (
+                    <button
+                      key={m._id}
+                      type="button"
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50"
+                      onClick={() => {
+                        setPhone(m.phone || "");
+                        setName(m.name || "");
+                        setCompany(m.company || "");
+                        setMatches([]);
+                      }}
+                    >
+                      <span className="font-medium">{m.phone}</span>
+                      <span className="text-gray-500"> - {m.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {loadingVisitor && (
                 <p className="text-sm text-gray-500">
@@ -291,13 +331,13 @@ export default function CheckIn({ setScreen }) {
 
             {/* RIGHT SIDE CAMERA */}
 
-            <div className="flex flex-col items-center justify-center gap-4 md:gap-6 bg-gray-50 p-4 md:p-6 rounded-xl min-w-0">
+            <div className="flex flex-col items-center justify-center gap-3 md:gap-4 bg-gray-50 p-3 md:p-4 rounded-xl min-w-0">
 
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full rounded-xl border object-cover"
+                className="w-full max-h-[280px] md:max-h-[360px] rounded-xl border object-cover"
               />
 
               <Button

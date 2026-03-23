@@ -3,6 +3,27 @@ const { supabase, toVisitorRow } = require("../lib/supabase");
 
 const router = express.Router();
 
+router.get("/search", async (req, res, next) => {
+  try {
+    const partial = String(req.query.phone || "").replace(/\D/g, "").slice(0, 10);
+    if (!partial || partial.length < 2) {
+      return res.json([]);
+    }
+
+    const { data, error } = await supabase
+      .from("visitors")
+      .select("*")
+      .like("phone", `${partial}%`)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) return next(error);
+    return res.json((data || []).map(toVisitorRow));
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.get("/:phone", async (req, res, next) => {
   try {
     if (!/^\d{10}$/.test(req.params.phone)) {

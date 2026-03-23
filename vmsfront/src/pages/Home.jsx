@@ -17,7 +17,7 @@ export default function Home({ setScreen }) {
             <UserPlus size={30} />
             Check In
           </Button>
-
+{/*
           <Button
             className="h-24 text-2xl flex gap-4 rounded-xl"
             variant="secondary"
@@ -26,7 +26,7 @@ export default function Home({ setScreen }) {
             <LogOut size={32} />
             Check Out
           </Button>
-
+*/}
           <Button
             className="h-24 text-2xl flex gap-4 rounded-xl"
             variant="outline"
