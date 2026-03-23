@@ -6,8 +6,10 @@ const morgan = require("morgan");
 // Supabase init (validates env vars)
 require("./lib/supabase");
 
+const authRouter = require("./routes/auth");
 const visitorsRouter = require("./routes/visitors");
 const visitsRouter = require("./routes/visits");
+const { requireAuth } = require("./middleware/auth");
 
 const app = express();
 
@@ -22,8 +24,9 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.use("/api/visitors", visitorsRouter);
-app.use("/api/visits", visitsRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/visitors", requireAuth, visitorsRouter);
+app.use("/api/visits", requireAuth, visitsRouter);
 
 app.use((err, req, res, next) => {
   // eslint-disable-next-line no-console

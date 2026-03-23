@@ -7,6 +7,7 @@ import { checkoutVisit, getVisits } from "@/lib/api";
 export default function Dashboard({ setScreen }) {
 
   const [search, setSearch] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [zoomImage, setZoomImage] = useState(null);
@@ -16,6 +17,69 @@ export default function Dashboard({ setScreen }) {
   const [total, setTotal] = useState(0);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
+  const IST_TZ = "Asia/Kolkata";
+
+  const toYMDInIST = (date) =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: IST_TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(date);
+
+  const getISTDateRange = (filter) => {
+    if (filter === "all") return {};
+
+    const now = new Date();
+    const istNow = new Date(now.toLocaleString("en-US", { timeZone: IST_TZ }));
+    const end = new Date(istNow);
+    const start = new Date(istNow);
+    const day = istNow.getDay(); // 0 Sun, 1 Mon, ...
+    const mondayOffset = day === 0 ? 6 : day - 1;
+
+    if (filter === "today") {
+      const ymd = toYMDInIST(istNow);
+      return { startDate: ymd, endDate: ymd };
+    }
+
+    if (filter === "yesterday") {
+      start.setDate(start.getDate() - 1);
+      const ymd = toYMDInIST(start);
+      return { startDate: ymd, endDate: ymd };
+    }
+
+    if (filter === "thisWeek") {
+      start.setDate(start.getDate() - mondayOffset);
+      return { startDate: toYMDInIST(start), endDate: toYMDInIST(end) };
+    }
+
+    if (filter === "lastWeek") {
+      const thisWeekStart = new Date(istNow);
+      thisWeekStart.setDate(thisWeekStart.getDate() - mondayOffset);
+      const lastWeekStart = new Date(thisWeekStart);
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+      const lastWeekEnd = new Date(thisWeekStart);
+      lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+      return { startDate: toYMDInIST(lastWeekStart), endDate: toYMDInIST(lastWeekEnd) };
+    }
+
+    if (filter === "thisMonth") {
+      const y = istNow.getFullYear();
+      const m = istNow.getMonth();
+      const monthStart = new Date(y, m, 1);
+      return { startDate: toYMDInIST(monthStart), endDate: toYMDInIST(end) };
+    }
+
+    if (filter === "lastMonth") {
+      const y = istNow.getFullYear();
+      const m = istNow.getMonth();
+      const monthStart = new Date(y, m - 1, 1);
+      const monthEnd = new Date(y, m, 0);
+      return { startDate: toYMDInIST(monthStart), endDate: toYMDInIST(monthEnd) };
+    }
+
+    return {};
+  };
 
   useEffect(() => {
 
@@ -25,15 +89,26 @@ export default function Dashboard({ setScreen }) {
 
       try {
 
-        const res = await getVisits({
+        const params = {
           page,
           limit,
+          ...getISTDateRange(timeFilter),
           ...(search ? { q: search } : {})
-        });
+        };
 
-        setVisits(res.data || []);
-        setTotal(res.total || 0);
+        console.log("[Dashboard] fetching visits with params:", params);
+        const res = await getVisits(params);
+        console.log("[Dashboard] raw response:", res);
 
+        const rows = Array.isArray(res) ? res : (res?.data || []);
+        const totalCount = Array.isArray(res) ? rows.length : (res?.total || 0);
+
+        setVisits(rows);
+        setTotal(totalCount);
+        console.log("[Dashboard] rows loaded:", rows.length, "total:", totalCount);
+
+      } catch (error) {
+        console.error("[Dashboard] failed to load visits:", error);
       } finally {
 
         setLoading(false);
@@ -44,39 +119,49 @@ export default function Dashboard({ setScreen }) {
 
     return () => clearTimeout(timer);
 
-  }, [search, page]);
+  }, [search, page, timeFilter]);
 
   const handleCheckout = async (id) => {
 
     await checkoutVisit(id);
 
+    console.log("[Dashboard] checkout success for visit id:", id);
     const refreshed = await getVisits({ page, limit });
-
-    setVisits(refreshed.data || []);
+    const rows = Array.isArray(refreshed) ? refreshed : (refreshed?.data || []);
+    const totalCount = Array.isArray(refreshed) ? rows.length : (refreshed?.total || 0);
+    setVisits(rows);
+    setTotal(totalCount);
+    console.log("[Dashboard] refreshed rows:", rows.length, "total:", totalCount);
 
   };
 
   const formatDateTime = (value) => {
 
     if (!value) return "--";
+    const raw = String(value);
+    const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+    const normalized = hasTimezone ? raw : `${raw}Z`;
+    const parsed = new Date(normalized);
 
-    return new Date(value).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
+    if (Number.isNaN(parsed.getTime())) return "--";
+
+    return parsed.toLocaleString("en-GB", {
+      timeZone: IST_TZ,
       day: "2-digit",
-      month: "short",
+      month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true
-    });
+    }).toLowerCase();
 
   };
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-6">
+    <div className="bg-gradient-to-br from-slate-100 to-slate-200 py-2">
 
-      <Card className="w-full max-w-6xl rounded-3xl shadow-2xl">
+      <Card className="w-full max-w-6xl mx-auto rounded-3xl shadow-2xl">
 
         <CardContent className="p-10 space-y-6">
 
@@ -92,15 +177,37 @@ export default function Dashboard({ setScreen }) {
 
           </div>
 
-          <Input
-            placeholder="Search name / phone"
-            value={search}
-            onChange={(e) => {
-              setPage(1);
-              setSearch(e.target.value);
-            }}
-            className="h-14 text-lg"
-          />
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <Input
+              placeholder="Search name / phone"
+              value={search}
+              onChange={(e) => {
+                setPage(1);
+                setSearch(e.target.value);
+              }}
+              className="h-14 text-lg md:flex-1"
+            />
+
+            <div className="flex items-center gap-2 shrink-0">
+              <p className="text-sm text-gray-600 whitespace-nowrap">Time Filter</p>
+              <select
+                value={timeFilter}
+                onChange={(e) => {
+                  setPage(1);
+                  setTimeFilter(e.target.value);
+                }}
+                className="h-14 text-lg border rounded-md px-3 bg-white min-w-[170px]"
+              >
+                <option value="all">All</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="thisWeek">This Week</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+              </select>
+            </div>
+          </div>
 
           {loading && (
             <p className="text-sm text-gray-500">

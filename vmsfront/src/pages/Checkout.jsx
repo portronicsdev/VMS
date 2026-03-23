@@ -89,9 +89,9 @@ export default function CheckOut({ setScreen }) {
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-6">
+    <div className="bg-gradient-to-br from-slate-100 to-slate-200 py-2">
 
-      <Card className="w-full max-w-4xl rounded-3xl shadow-2xl">
+      <Card className="w-full max-w-4xl mx-auto rounded-3xl shadow-2xl">
 
         <CardContent className="p-10 space-y-6">
 

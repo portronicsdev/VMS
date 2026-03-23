@@ -9,6 +9,16 @@ const upload = multer({
   limits: { fileSize: 500000 }
 });
 
+function getISTDayStart(dateStr) {
+  return new Date(`${dateStr}T00:00:00+05:30`);
+}
+
+function getISTNextDayStart(dateStr) {
+  const next = new Date(`${dateStr}T00:00:00+05:30`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next;
+}
+
 
 /* =================================
    CREATE VISIT
@@ -20,9 +30,9 @@ router.post("/", upload.single("photo"), async (req, res, next) => {
 
     const { phone, name, company, purpose, personToMeet } = req.body;
 
-    if (!phone || !name || !personToMeet) {
+    if (!phone || !name || !purpose || !personToMeet) {
       return res.status(400).json({
-        message: "phone, name and personToMeet required"
+        message: "phone, name, purpose and personToMeet required"
       });
     }
 
@@ -126,16 +136,26 @@ router.put("/:id/checkout", async (req, res, next) => {
 ================================= */
 
 router.get("/", async (req, res, next) => {
-
   try {
-
-    const page = parseInt(req.query.page || "1", 10);
-    const limit = parseInt(req.query.limit || "25", 10);
-
+    const { date, startDate, endDate, name, phone, status, purpose, personToMeet, q } = req.query;
+    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || "25", 10)));
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const { q } = req.query;
+    console.log("[GET /api/visits] query:", {
+      page,
+      limit,
+      date,
+      startDate,
+      endDate,
+      name,
+      phone,
+      status,
+      purpose,
+      personToMeet,
+      q
+    });
 
     let query = supabase
       .from("visits")
@@ -144,20 +164,51 @@ router.get("/", async (req, res, next) => {
       .range(from, to);
 
     if (q) {
+      const safeQ = String(q).replace(/[%'\"\\]/g, "").slice(0, 100);
       query = query.or(
-        `name.ilike.%${q}%,person_to_meet.ilike.%${q}%,phone.ilike.%${q}%`
+        `name.ilike.%${safeQ}%,person_to_meet.ilike.%${safeQ}%,phone.ilike.%${safeQ}%`
       );
+    } else {
+      if (name) query = query.ilike("name", `%${name}%`);
+      if (personToMeet) query = query.ilike("person_to_meet", `%${personToMeet}%`);
+      if (phone) query = query.ilike("phone", `%${phone}%`);
+    }
+
+    if (status) query = query.eq("status", status);
+    if (purpose) query = query.ilike("purpose", `%${purpose}%`);
+
+    if (date) {
+      const start = getISTDayStart(date);
+      const end = getISTNextDayStart(date);
+      query = query
+        .gte("check_in_time", start.toISOString())
+        .lt("check_in_time", end.toISOString());
+    }
+
+    if (startDate || endDate) {
+      const start = startDate ? getISTDayStart(startDate) : new Date("1970-01-01T00:00:00.000Z");
+      const end = endDate ? getISTNextDayStart(endDate) : new Date();
+      query = query
+        .gte("check_in_time", start.toISOString())
+        .lt("check_in_time", end.toISOString());
     }
 
     const { data, error, count } = await query;
 
     if (error) return next(error);
 
+    console.log("[GET /api/visits] result:", {
+      returned: (data || []).length,
+      total: count ?? 0,
+      page,
+      limit
+    });
+
     res.json({
       data: (data || []).map(toVisitRow),
+      total: count ?? 0,
       page,
-      limit,
-      total: count
+      limit
     });
 
   } catch (err) {
