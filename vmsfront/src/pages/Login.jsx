@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { forgotPassword, login, resetPassword } from "@/lib/api";
 
-export default function Login({ onLoginSuccess }) {
+export default function Login({ onLoginSuccess, notice = "" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +81,11 @@ export default function Login({ onLoginSuccess }) {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-md rounded-2xl shadow-lg">
         <CardContent className="p-6 space-y-5">
+          {notice && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {notice}
+            </div>
+          )}
           <div className="flex flex-col items-center text-center">
             <img
               src="/logo192.png"

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import Home from "./pages/Home";
 import CheckIn from "./pages/Checkin";
 import CheckOut from "./pages/Checkout";
@@ -11,6 +12,7 @@ export default function VisitorApp() {
   const [user, setUser] = useState(() =>
     getAuthToken() ? getAuthUser() : null
   );
+  const [authNotice, setAuthNotice] = useState("");
 
   const handleLogout = () => {
     clearAuth();
@@ -18,8 +20,27 @@ export default function VisitorApp() {
     setScreen("home");
   };
 
+  useEffect(() => {
+    let timer = null;
+    const onAuthLogout = (event) => {
+      const message = event?.detail?.message || "Session expired. Please login again.";
+      setAuthNotice(message);
+      clearAuth();
+      setUser(null);
+      setScreen("home");
+      timer = setTimeout(() => {
+        setAuthNotice("");
+      }, 2500);
+    };
+    window.addEventListener("vms:auth-logout", onAuthLogout);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("vms:auth-logout", onAuthLogout);
+    };
+  }, []);
+
   if (!user) {
-    return <Login onLoginSuccess={setUser} />;
+    return <Login onLoginSuccess={setUser} notice={authNotice} />;
   }
 
   return (

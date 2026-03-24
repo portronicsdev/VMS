@@ -20,6 +20,16 @@ async function request(path, options = {}) {
     }
   });
 
+  if (res.status === 401) {
+    clearAuth();
+    window.dispatchEvent(
+      new CustomEvent("vms:auth-logout", {
+        detail: { message: "Session expired. Please login again." }
+      })
+    );
+    throw new Error("Session expired. Please login again.");
+  }
+
   if (!res.ok) {
     let message = "Request failed";
 
