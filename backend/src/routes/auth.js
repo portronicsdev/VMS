@@ -10,7 +10,7 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
 const REGISTER_API_KEY = process.env.REGISTER_API_KEY;
-const FRONTEND_RESET_BASE_URL = process.env.FRONTEND_RESET_BASE_URL || "http://localhost:5173";
+const FRONTEND_RESET_BASE_URL = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 if (!JWT_SECRET) {
   throw new Error("Missing JWT_SECRET in environment");
@@ -54,6 +54,7 @@ router.post("/register", async (req, res, next) => {
 
     return res.status(201).json({ user: data });
   } catch (error) {
+    console.log("Error in register:", error);
     return next(error);
   }
 });
@@ -94,6 +95,7 @@ router.post("/login", async (req, res, next) => {
       user: { id: user.id, email: user.email, name: user.name }
     });
   } catch (error) {
+    console.log("Error in login:", error);
     return next(error);
   }
 });
@@ -143,6 +145,7 @@ router.post("/forgot-password", async (req, res, next) => {
 
     return res.json({ message: "If this email is registered, reset link has been sent." });
   } catch (error) {
+    console.log("Error in forgot-password:", error);
     return next(error);
   }
 });
@@ -185,6 +188,7 @@ router.post("/reset-password", async (req, res, next) => {
     if (updateError) return next(updateError);
     return res.json({ message: "Password reset successful" });
   } catch (error) {
+    console.log("Error in reset-password:", error);
     return next(error);
   }
 });

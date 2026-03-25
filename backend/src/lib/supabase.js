@@ -26,11 +26,15 @@ console.log("✅ Supabase client initialized");
 /** Map Supabase snake_case row to API camelCase + _id for frontend compatibility */
 function toVisitRow(row) {
   if (!row) return null;
+  const visitorCompany = Array.isArray(row.visitors)
+    ? row.visitors[0]?.company
+    : row.visitors?.company;
   return {
     _id: row.id,
     visitorId: row.visitor_id,
     phone: row.phone,
     name: row.name,
+    company: row.company || visitorCompany || null,
     purpose: row.purpose,
     personToMeet: row.person_to_meet,
     photoUrl: row.photo_url,

@@ -143,23 +143,10 @@ router.get("/", async (req, res, next) => {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    console.log("[GET /api/visits] query:", {
-      page,
-      limit,
-      date,
-      startDate,
-      endDate,
-      name,
-      phone,
-      status,
-      purpose,
-      personToMeet,
-      q
-    });
 
     let query = supabase
       .from("visits")
-      .select("*", { count: "exact" })
+      .select("*, visitors(company)", { count: "exact" })
       .order("check_in_time", { ascending: false })
       .range(from, to);
 

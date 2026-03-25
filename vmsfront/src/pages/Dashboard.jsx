@@ -225,6 +225,7 @@ export default function Dashboard({ setScreen }) {
 
                   <th className="p-3 text-left">Photo</th>
                   <th className="p-3 text-left">Name</th>
+                  <th className="p-3 text-left">Company</th>
                   <th className="p-3 text-left">Phone</th>
                   <th className="p-3 text-left">Purpose</th>
                   <th className="p-3 text-left">Person</th>
@@ -258,6 +259,7 @@ export default function Dashboard({ setScreen }) {
                     </td>
 
                     <td className="p-3">{row.name}</td>
+                    <td className="p-3">{row.company || "--"}</td>
                     <td className="p-3">{row.phone}</td>
                     <td className="p-3">{row.purpose}</td>
                     <td className="p-3">{row.personToMeet}</td>
