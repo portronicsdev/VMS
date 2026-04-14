@@ -153,3 +153,10 @@ export function checkoutVisit(id) {
     method: "PUT"
   });
 }
+
+export function updateVisitEntry(id, payload) {
+  return request(`/api/visits/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}

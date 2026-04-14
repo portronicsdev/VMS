@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { checkoutVisit, getVisits } from "@/lib/api";
+import { checkoutVisit, getVisits, updateVisitEntry } from "@/lib/api";
 
 export default function Dashboard({ setScreen }) {
 
@@ -11,6 +11,9 @@ export default function Dashboard({ setScreen }) {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [zoomImage, setZoomImage] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", company: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
@@ -133,6 +136,52 @@ export default function Dashboard({ setScreen }) {
     setTotal(totalCount);
     console.log("[Dashboard] refreshed rows:", rows.length, "total:", totalCount);
 
+  };
+
+  const startEdit = (row) => {
+    setEditingId(row._id);
+    setEditForm({
+      name: row.name || "",
+      company: row.company || ""
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ name: "", company: "" });
+  };
+
+  const saveEdit = async (id) => {
+    const payload = {
+      name: editForm.name.trim(),
+      company: editForm.company.trim()
+    };
+
+    if (!payload.name) {
+      window.alert("Name is required.");
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+      await updateVisitEntry(id, payload);
+      const refreshed = await getVisits({
+        page,
+        limit,
+        ...getISTDateRange(timeFilter),
+        ...(search ? { q: search } : {})
+      });
+      const rows = Array.isArray(refreshed) ? refreshed : (refreshed?.data || []);
+      const totalCount = Array.isArray(refreshed) ? rows.length : (refreshed?.total || 0);
+      setVisits(rows);
+      setTotal(totalCount);
+      cancelEdit();
+    } catch (error) {
+      console.error("[Dashboard] failed to update visit entry:", error);
+      window.alert(error?.message || "Failed to update entry.");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const formatDateTime = (value) => {
@@ -258,8 +307,28 @@ export default function Dashboard({ setScreen }) {
 
                     </td>
 
-                    <td className="p-3">{row.name}</td>
-                    <td className="p-3">{row.company || "--"}</td>
+                    <td className="p-3">
+                      {editingId === row._id ? (
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                          }
+                          className="h-9 min-w-[150px]"
+                        />
+                      ) : row.name}
+                    </td>
+                    <td className="p-3">
+                      {editingId === row._id ? (
+                        <Input
+                          value={editForm.company}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, company: e.target.value }))
+                          }
+                          className="h-9 min-w-[150px]"
+                        />
+                      ) : (row.company || "--")}
+                    </td>
                     <td className="p-3">{row.phone}</td>
                     <td className="p-3">{row.purpose}</td>
                     <td className="p-3">{row.personToMeet}</td>
@@ -268,18 +337,43 @@ export default function Dashboard({ setScreen }) {
                     <td className="p-3">{row.status}</td>
 
                     <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        {editingId === row._id ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              disabled={savingEdit}
+                              onClick={() => saveEdit(row._id)}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="outline"
+                              disabled={savingEdit}
+                              onClick={cancelEdit}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            onClick={() => startEdit(row)}
+                          >
+                            Edit
+                          </Button>
+                        )}
 
-                      {row.status === "active" ? (
-
-                        <Button
-                          variant="outline"
-                          onClick={() => handleCheckout(row._id)}
-                        >
-                          Check Out
-                        </Button>
-
-                      ) : "--"}
-
+                        {row.status === "active" ? (
+                          <Button
+                            variant="outline"
+                            disabled={editingId === row._id}
+                            onClick={() => handleCheckout(row._id)}
+                          >
+                            Check Out
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
 
                   </tr>

@@ -130,6 +130,56 @@ router.put("/:id/checkout", async (req, res, next) => {
 
 });
 
+router.put("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, company } = req.body || {};
+
+    const cleanName = String(name || "").trim();
+    const cleanCompany = String(company || "").trim();
+
+    if (!cleanName) {
+      return res.status(400).json({ message: "name is required" });
+    }
+
+    const { data: existingVisit, error: visitReadError } = await supabase
+      .from("visits")
+      .select("id, visitor_id")
+      .eq("id", id)
+      .single();
+
+    if (visitReadError) return next(visitReadError);
+    if (!existingVisit) {
+      return res.status(404).json({ message: "Visit not found" });
+    }
+
+    const { error: visitorUpdateError } = await supabase
+      .from("visitors")
+      .update({
+        name: cleanName,
+        company: cleanCompany || null
+      })
+      .eq("id", existingVisit.visitor_id);
+
+    if (visitorUpdateError) return next(visitorUpdateError);
+
+    const { data: updatedVisit, error: visitUpdateError } = await supabase
+      .from("visits")
+      .update({
+        name: cleanName
+      })
+      .eq("id", id)
+      .select("*, visitors(company)")
+      .single();
+
+    if (visitUpdateError) return next(visitUpdateError);
+
+    return res.json(toVisitRow(updatedVisit));
+  } catch (err) {
+    return next(err);
+  }
+});
+
 
 /* =================================
    GET VISITS (PAGINATED)
