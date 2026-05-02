@@ -9,6 +9,7 @@ require("./lib/supabase");
 const authRouter = require("./routes/auth");
 const visitorsRouter = require("./routes/visitors");
 const visitsRouter = require("./routes/visits");
+const conferenceRouter = require("./routes/conference");
 const { requireAuth } = require("./middleware/auth");
 
 const app = express();
@@ -27,6 +28,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/visitors", requireAuth, visitorsRouter);
 app.use("/api/visits", requireAuth, visitsRouter);
+app.use("/api/conference", requireAuth, conferenceRouter);
 
 app.use((err, req, res, next) => {
   // eslint-disable-next-line no-console

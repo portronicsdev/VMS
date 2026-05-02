@@ -160,3 +160,37 @@ export function updateVisitEntry(id, payload) {
     body: JSON.stringify(payload)
   });
 }
+
+/* =========================================
+   CONFERENCE ROOMS
+========================================= */
+
+export function getConferenceRooms() {
+  return request("/api/conference/rooms");
+}
+
+export function getConferenceBookings(params = {}) {
+  const q = new URLSearchParams(params);
+  const s = q.toString();
+  return request(`/api/conference/bookings${s ? `?${s}` : ""}`);
+}
+
+export function getTakenConferenceSlots(roomId, date) {
+  const q = new URLSearchParams({ date });
+  return request(
+    `/api/conference/rooms/${encodeURIComponent(roomId)}/taken-slots?${q}`
+  );
+}
+
+export function createConferenceBooking(payload) {
+  return request("/api/conference/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function cancelConferenceBooking(id) {
+  return request(`/api/conference/bookings/${encodeURIComponent(id)}/cancel`, {
+    method: "PUT"
+  });
+}

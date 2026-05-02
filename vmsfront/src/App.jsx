@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import CheckIn from "./pages/Checkin";
 import CheckOut from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
+import ConferenceRooms from "./pages/ConferenceRooms";
 import Login from "./pages/Login";
 import { clearAuth, getAuthToken, getAuthUser } from "@/lib/api";
 
@@ -75,6 +76,7 @@ export default function VisitorApp() {
         {screen === "checkin" && <CheckIn setScreen={setScreen} />}
         {screen === "checkout" && <CheckOut setScreen={setScreen} />}
         {screen === "dashboard" && <Dashboard setScreen={setScreen} />}
+        {screen === "rooms" && <ConferenceRooms setScreen={setScreen} />}
       </div>
     </div>
   );

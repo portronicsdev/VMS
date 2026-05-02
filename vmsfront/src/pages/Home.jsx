@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus, LogOut, LayoutDashboard } from "lucide-react";
+import { UserPlus, LayoutDashboard, Building2 } from "lucide-react";
 
 export default function Home({ setScreen }) {
   return (
@@ -34,6 +34,15 @@ export default function Home({ setScreen }) {
           >
             <LayoutDashboard size={32} />
             Dashboard
+          </Button>
+
+          <Button
+            className="h-24 text-2xl flex gap-4 rounded-xl"
+            variant="secondary"
+            onClick={() => setScreen("rooms")}
+          >
+            <Building2 size={32} />
+            Conference rooms
           </Button>
 
         </CardContent>
